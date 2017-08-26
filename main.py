@@ -11,8 +11,12 @@ import signal
 import snowboydecoder
 import time
 import pygame
+import pprint
 
-pygame.init()
+using_gui = False
+
+if using_gui:
+    pygame.init()
 
 voice_lang="-ven-us"
 voice_speed="-s175" # default: 175
@@ -36,15 +40,28 @@ def play_random_error():
                         ]
     play_voice(random.choice(error_reponses))
 
+def on_client_match(intent):
+    global interrupted
+    print("Client match detected, executing "+str(intent)+" intent...")
+    if intent == "SHUTDOWN":
+        interrupted = True
+
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
         print("Partial transcript: " + transcript)
     def onFinalResponse(self, response):
-        print("Final response: " + str(response))
+        print("Final response:")
+        pp = pprint.PrettyPrinter()
+        pp.pprint(response)
         if len(response["AllResults"]) > 0:
             spokenResponseLong = response["AllResults"][0]["WrittenResponseLong"]
             if spokenResponseLong != "Didn't get that!":
                 play_voice(spokenResponseLong)
+
+                # Execute client match
+                if "Result" in response["AllResults"][0]:
+                    if "Intent" in response["AllResults"][0]["Result"]:
+                        on_client_match(response["AllResults"][0]["Result"]["Intent"])
             else:
                 play_random_error()
         else:
@@ -113,14 +130,15 @@ def detection_callback():
     global detected
     detected = True
     # snowboydecoder.play_audio_file(snowboydecoder.DETECT_DING)
-    os.system("play resources/ding.wav")
+    os.system("play resources/dong.wav")
 
 def interrupt_callback():
     global interrupted, detected
     return interrupted or detected
 
 if __name__ == '__main__':
-    screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
+    if using_gui:
+        screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
 
     print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
 
@@ -140,7 +158,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     models = ["pascal_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.3, 0.1, 0.35]
+    sensitivity = [0.4, 0.1, 0.35]
 
     if not len(models) == len(sensitivity):
         raise AssertionError()
@@ -152,8 +170,9 @@ if __name__ == '__main__':
                      lambda: detection_callback(),
                      lambda: detection_callback()]
         print('Listening... Press Ctrl+C to exit')
-        pygame.draw.circle(screen, (0,0,255), (320,240), 100, 10)
-        pygame.display.update()
+        if using_gui:
+            pygame.draw.circle(screen, (0,0,255), (320,240), 100, 10)
+            pygame.display.update()
         detector.start(detected_callback=callbacks,
                        interrupt_check=interrupt_callback,
                        sleep_time=0.03)

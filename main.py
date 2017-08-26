@@ -1,6 +1,7 @@
 from src import houndify
 from src import client_defines
 from src import client_matches
+from src import pygame_gdt as gdt
 from gtts import gTTS
 import RPi.GPIO as GPIO
 import os
@@ -12,8 +13,20 @@ import snowboydecoder
 import time
 import pygame
 import pprint
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--gui", help="display the GUI",
+                    action="store_true")
+args = parser.parse_args()
 
 using_gui = False
+
+if args.gui:
+    print("GUI turned on")
+    using_gui = True
+else:
+    print("GUI turned off")
 
 if using_gui:
     pygame.init()
@@ -37,6 +50,8 @@ def play_random_error():
                             "Could you repeat that please?",
                             "You what, mate?",
                             "I'm sorry. I didn't understand that.",
+                            "Can you see that again, please?",
+                            "Sorry, I didn't quite hear you just now."
                         ]
     play_voice(random.choice(error_reponses))
 
@@ -49,6 +64,13 @@ def on_client_match(intent):
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
         print("Partial transcript: " + transcript)
+        if using_gui:
+            screen.fill((0,0,0))
+            font_comic = pygame.font.SysFont("comicsansms", 24)
+            pt_text = font_comic.render(transcript, 1, (255,255,0))
+            screen.blit(pt_text, (320 - pt_text.get_width()//2, 120))
+            pygame.display.update()
+
     def onFinalResponse(self, response):
         print("Final response:")
         pp = pprint.PrettyPrinter()
@@ -138,7 +160,8 @@ def interrupt_callback():
 
 if __name__ == '__main__':
     if using_gui:
-        screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
+        # screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
+        screen = pygame.display.set_mode((640,480))
 
     print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
 
@@ -171,7 +194,7 @@ if __name__ == '__main__':
                      lambda: detection_callback()]
         print('Listening... Press Ctrl+C to exit')
         if using_gui:
-            pygame.draw.circle(screen, (0,0,255), (320,240), 100, 10)
+            pygame.draw.circle(screen, (89,136,255), (320,240), 100, 10)
             pygame.display.update()
         detector.start(detected_callback=callbacks,
                        interrupt_check=interrupt_callback,

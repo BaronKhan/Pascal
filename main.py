@@ -62,7 +62,7 @@ def on_client_match(intent):
         interrupted = True
     elif intent == "FULLSCREEN_START":
         if using_gui:
-            screen = pygame.display.set_mode((640,480), FULLSCREEN)
+            screen = pygame.display.set_mode((640,480), pygame.FULLSCREEN)
     elif intent == "FULLSCREEN_STOP":
         if using_gui:
             screen = pygame.display.set_mode((640,480))

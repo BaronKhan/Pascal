@@ -13,4 +13,20 @@ clientMatches = [ {
 					"SpokenResponseLong" : "I am shutting down now. Goodbye.",
 					"WrittenResponse" : "Shutting down",
 					"WrittenResponseLong" : "I am shutting down now. Goodbye."
+				},
+				{
+					"Expression" : '("enter" | start") . ("full" . "screen" | "fullscreen") [mode]',
+					"Result" : { "Intent" : "FULLSCREEN_START" },
+					"SpokenResponse" : "Fullscreen",
+					"SpokenResponseLong" : "Entering fullscreen mode.",
+					"WrittenResponse" : "Fullscreen",
+					"WrittenResponseLong" : "Entering fullscreen mode"
+				},
+				{
+					"Expression" : '("exit" | stop") . ("full" . "screen" | "fullscreen") [mode]',
+					"Result" : { "Intent" : "FULLSCREEN_STOP" },
+					"SpokenResponse" : "Fullscreen Ended",
+					"SpokenResponseLong" : "Exiting fullscreen mode.",
+					"WrittenResponse" : "Fullscreen Ended",
+					"WrittenResponseLong" : "Exiting fullscreen mode"
 				} ]

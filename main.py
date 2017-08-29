@@ -18,15 +18,24 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
                     action="store_true")
+parser.add_argument("--full", help="start in fullscreen mode",
+                    action="store_true")
 args = parser.parse_args()
 
 using_gui = False
+start_fullscreen = False
 
 if args.gui:
     print("GUI turned on")
     using_gui = True
 else:
     print("GUI turned off")
+
+if args.full:
+    print("Starting in fullscreen mode")
+    start_fullscreen = True
+else:
+    print("Starting in windowed mode")
 
 if using_gui:
     pygame.init()
@@ -43,6 +52,20 @@ name = "pascal"
 interrupted = False
 detected = False
 error = False
+arc_pos = 0.0
+partial_transcript = ""
+
+def on_client_match(intent):
+    global interrupted
+    print("Client match detected, executing "+str(intent)+" intent...")
+    if intent == "SHUTDOWN":
+        interrupted = True
+    elif intent == "FULLSCREEN_START":
+        if using_gui:
+            screen = pygame.display.set_mode((640,480), FULLSCREEN)
+    elif intent == "FULLSCREEN_STOP":
+        if using_gui:
+            screen = pygame.display.set_mode((640,480))
 
 def play_random_error():
     error_reponses =    [
@@ -55,30 +78,25 @@ def play_random_error():
                         ]
     play_voice(random.choice(error_reponses))
 
-def on_client_match(intent):
-    global interrupted
-    print("Client match detected, executing "+str(intent)+" intent...")
-    if intent == "SHUTDOWN":
-        interrupted = True
-
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
+        global partial_transcript
         print("Partial transcript: " + transcript)
-        if using_gui:
-            screen.fill((0,0,0))
-            font_comic = pygame.font.SysFont("comicsansms", 24)
-            pt_text = font_comic.render(transcript, 1, (255,255,0))
-            screen.blit(pt_text, (320 - pt_text.get_width()//2, 120))
-            pygame.display.update()
+        partial_transcript = transcript
 
     def onFinalResponse(self, response):
+        screen.fill((0,0,0))
         print("Final response:")
         pp = pprint.PrettyPrinter()
         pp.pprint(response)
         if len(response["AllResults"]) > 0:
-            spokenResponseLong = response["AllResults"][0]["WrittenResponseLong"]
-            if spokenResponseLong != "Didn't get that!":
-                play_voice(spokenResponseLong)
+            responseSpeech = ""
+            if "SpokenResponseLong" in response["AllResults"][0]:
+                responseSpeech = response["AllResults"][0]["SpokenResponseLong"]
+            else:
+                responseSpeech = response["AllResults"][0]["WrittenResponseLong"]
+            if responseSpeech != "Didn't get that!":
+                play_voice(responseSpeech)
 
                 # Execute client match
                 if "Result" in response["AllResults"][0]:
@@ -88,6 +106,7 @@ class MyListener(houndify.HoundListener):
                 play_random_error()
         else:
             play_random_error()
+
     def onError(self, err):
         global error
         print("Error: " + str(err))
@@ -114,9 +133,11 @@ def test_voice():
     play_voice(voice_text)
 
 def run_voice_request(client):
-    global interrupted, error
+    global interrupted, error, arc_pos, partial_transcript
     i = 0
     finished = False
+    partial_transcript = ""
+    arc_pos = 0.0
     try:
         client.start(MyListener())
         os.system("amixer sset PCM mute")
@@ -129,6 +150,14 @@ def run_voice_request(client):
             while len(samples) != 0 and not finished:
                 finished = client.fill(samples)
                 samples = audio.readframes(BUFFER_SIZE)
+                if using_gui:
+                    screen.fill((0,0,0))
+                    font_comic = pygame.font.SysFont("comicsansms", 24)
+                    pt_text = font_comic.render(partial_transcript, 1, (255,255,0))
+                    screen.blit(pt_text, (320 - pt_text.get_width()//2, 60))
+                    pygame.draw.arc(screen, (89,136,255), (220,140,200,200), arc_pos+0.628, arc_pos+5.645, 10)
+                    pygame.display.update()
+                    arc_pos += 0.05
             audio.close()
             os.remove("temp"+str(i)+".wav")
             i+=1
@@ -160,8 +189,10 @@ def interrupt_callback():
 
 if __name__ == '__main__':
     if using_gui:
-        # screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
-        screen = pygame.display.set_mode((640,480))
+        if start_fullscreen:
+            screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)
+        else:
+            screen = pygame.display.set_mode((640,480))
 
     print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
 
@@ -181,7 +212,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     models = ["pascal_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.4, 0.1, 0.35]
+    sensitivity = [0.41, 0.1, 0.35]
 
     if not len(models) == len(sensitivity):
         raise AssertionError()

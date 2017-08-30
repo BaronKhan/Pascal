@@ -1,6 +1,7 @@
 from src import houndify
 from src import client_defines
 from src import client_matches
+from src import client_state
 from src import pygame_gdt as gdt
 from src import transmit_rf as rf
 from gtts import gTTS
@@ -195,8 +196,9 @@ def run_voice_request(client):
                 finished = client.fill(samples)
                 samples = audio.readframes(BUFFER_SIZE)
             audio.close()
-            os.remove("temp"+str(i)+".wav")
             i+=1
+        for j in range(i):
+            os.remove("temp"+str(j)+".wav")
         os.system("amixer sset PCM unmute")
         client.finish()
         if error:
@@ -240,14 +242,15 @@ if __name__ == '__main__':
     client = houndify.StreamingHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
     client.setLocation(51.654022,-0.038691)
     client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
+    # client.setHoundRequestInfo('ClientState', client_state.clientState)
     client.setHoundRequestInfo('UnitPreference', 'METRIC')
     client.setHoundRequestInfo('FirstPersonSelf', name)
     client.setSampleRate(16000)
 
     signal.signal(signal.SIGINT, signal_handler)
 
-    models = ["pascal_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.41, 0.1, 0.35]
+    models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
+    sensitivity = [0.41,0.41, 0.1, 0.35]
 
     if not len(models) == len(sensitivity):
         raise AssertionError()
@@ -256,6 +259,7 @@ if __name__ == '__main__':
         detected = False
         detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity)
         callbacks = [lambda: detection_callback(),
+                     lambda: detection_callback(),
                      lambda: detection_callback(),
                      lambda: detection_callback()]
         print('Listening... Press Ctrl+C to exit')

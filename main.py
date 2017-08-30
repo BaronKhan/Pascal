@@ -2,6 +2,7 @@ from src import houndify
 from src import client_defines
 from src import client_matches
 from src import pygame_gdt as gdt
+from src import transmit_rf as rf
 from gtts import gTTS
 import RPi.GPIO as GPIO
 import os
@@ -15,16 +16,42 @@ import pygame
 import pprint
 import argparse
 
+using_gui = False
+start_fullscreen = False
+screen = None
+
+voice_lang="-ven-us"
+voice_speed="-s200" # default: 175
+voice_type="m7"     # current: m7
+voice_gap=""        # default: -g10
+
+BUFFER_SIZE = 512
+
+name = "pascal"
+
+interrupted = False
+detected = False
+error = False
+arc_pos = 0.0
+
+# RF signals
+a_on =  '1110111110101010110011001'
+a_off = '1110111110101010110000111'
+b_on =  '1110111110101010001111001'
+b_off = '1110111110101010001100111'
+c_on =  '1110111110101000111111001'
+c_off = '1110111110101000111100111'
+d_on =  '1110111110100010111111001'
+d_off = '1110111110100010111100111'
+e_on =  '1110111110001010111111001'
+e_off = '1110111110001010111100111'
+
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
                     action="store_true")
 parser.add_argument("--full", help="start in fullscreen mode",
                     action="store_true")
 args = parser.parse_args()
-
-using_gui = False
-start_fullscreen = False
-screen = None
 
 if args.gui:
     print("GUI turned on")
@@ -41,20 +68,6 @@ else:
 if using_gui:
     pygame.init()
 
-voice_lang="-ven-us"
-voice_speed="-s175" # default: 175
-voice_type="m7"     # current: m7
-voice_gap=""        # default: -g10
-
-BUFFER_SIZE = 512
-
-name = "pascal"
-
-interrupted = False
-detected = False
-error = False
-arc_pos = 0.0
-
 def on_client_match(intent):
     global interrupted, screen
     print("Client match detected, executing "+str(intent)+" intent...")
@@ -66,6 +79,10 @@ def on_client_match(intent):
     elif intent == "FULLSCREEN_STOP":
         if using_gui:
             screen = pygame.display.set_mode((640,480))
+    elif intent == "NIGHT_LIGHT_ON":    # Yes, I have a night light. Don't judge me.
+        rf.transmit_code(a_on)
+    elif intent == "NIGHT_LIGHT_OFF":
+        rf.transmit_code(a_off)
 
 def play_random_error():
     error_reponses =    [
@@ -76,6 +93,19 @@ def play_random_error():
                             "Sorry, I didn't quite hear you just now."
                         ]
     play_voice(random.choice(error_reponses))
+
+def play_help_msg():
+    help_reponses =    [
+                            "How may I help you?",
+                            "Hello.",
+                            "Yes?"
+                            "",
+                            "",
+                            "",
+                            "",
+                            ""
+                        ]
+    play_voice(random.choice(help_reponses))
 
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
@@ -156,6 +186,7 @@ def run_voice_request(client):
             help_text = font_comic.render("How may I help you?", 1, (89,136,255))
             screen.blit(help_text, (320 - help_text.get_width()//2, 180 - help_text.get_height()//2))
             pygame.display.update()
+            play_help_msg()
         while not finished and i<5:
             os.system("arecord temp"+str(i)+".wav -D sysdefault:CARD=1 -r 16000 -f S16_LE -d 1")
             audio = wave.open("temp"+str(i)+".wav")
@@ -200,7 +231,7 @@ if __name__ == '__main__':
 
     print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
 
-    play_voice("Hello.")
+    play_voice("Hello. I am Pascal.")
 
     GPIO.setmode(GPIO.BCM)
     GPIO.setwarnings(False)
@@ -240,3 +271,4 @@ if __name__ == '__main__':
 
     if error:
         play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
+        GPIO.cleanup()

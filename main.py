@@ -24,6 +24,7 @@ args = parser.parse_args()
 
 using_gui = False
 start_fullscreen = False
+screen = None
 
 if args.gui:
     print("GUI turned on")
@@ -53,10 +54,9 @@ interrupted = False
 detected = False
 error = False
 arc_pos = 0.0
-partial_transcript = ""
 
 def on_client_match(intent):
-    global interrupted
+    global interrupted, screen
     print("Client match detected, executing "+str(intent)+" intent...")
     if intent == "SHUTDOWN":
         interrupted = True
@@ -70,8 +70,7 @@ def on_client_match(intent):
 def play_random_error():
     error_reponses =    [
                             "I'm sorry. I didn't catch that.",
-                            "Could you repeat that please?",
-                            "You what, mate?",
+                            "Could you repeat, please?",
                             "I'm sorry. I didn't understand that.",
                             "Can you see that again, please?",
                             "Sorry, I didn't quite hear you just now."
@@ -80,12 +79,21 @@ def play_random_error():
 
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
-        global partial_transcript
+        global screen, arc_pos
         print("Partial transcript: " + transcript)
-        partial_transcript = transcript
+        if using_gui:
+            font_comic = pygame.font.SysFont("comicsansms", 24)
+            screen.fill((0,0,0))
+            pt_text = font_comic.render(transcript, 1, (255,255,0))
+            screen.blit(pt_text, (320 - pt_text.get_width()//2, 30))
+            pygame.draw.arc(screen, (89,136,255), (220,140,200,200), arc_pos+0.628, arc_pos+5.645, 10)
+            pygame.display.update()
+            arc_pos += 0.1
 
     def onFinalResponse(self, response):
-        screen.fill((0,0,0))
+        global screen
+        if using_gui:
+            screen.fill((0,0,0))
         print("Final response:")
         pp = pprint.PrettyPrinter()
         pp.pprint(response)
@@ -136,13 +144,18 @@ def run_voice_request(client):
     global interrupted, error, arc_pos, partial_transcript
     i = 0
     finished = False
-    partial_transcript = ""
     arc_pos = 0.0
     try:
         client.start(MyListener())
         os.system("amixer sset PCM mute")
         GPIO.output(18,GPIO.HIGH)
         print("Starting voice control")
+        if using_gui:
+            font_comic = pygame.font.SysFont("comicsansms", 72)
+            screen.fill((0,0,0))
+            help_text = font_comic.render("How may I help you?", 1, (89,136,255))
+            screen.blit(help_text, (320 - help_text.get_width()//2, 180 - help_text.get_height()//2))
+            pygame.display.update()
         while not finished and i<5:
             os.system("arecord temp"+str(i)+".wav -D sysdefault:CARD=1 -r 16000 -f S16_LE -d 1")
             audio = wave.open("temp"+str(i)+".wav")
@@ -150,14 +163,6 @@ def run_voice_request(client):
             while len(samples) != 0 and not finished:
                 finished = client.fill(samples)
                 samples = audio.readframes(BUFFER_SIZE)
-                if using_gui:
-                    screen.fill((0,0,0))
-                    font_comic = pygame.font.SysFont("comicsansms", 24)
-                    pt_text = font_comic.render(partial_transcript, 1, (255,255,0))
-                    screen.blit(pt_text, (320 - pt_text.get_width()//2, 60))
-                    pygame.draw.arc(screen, (89,136,255), (220,140,200,200), arc_pos+0.628, arc_pos+5.645, 10)
-                    pygame.display.update()
-                    arc_pos += 0.05
             audio.close()
             os.remove("temp"+str(i)+".wav")
             i+=1
@@ -180,7 +185,6 @@ def signal_handler(signal, frame):
 def detection_callback():
     global detected
     detected = True
-    # snowboydecoder.play_audio_file(snowboydecoder.DETECT_DING)
     os.system("play resources/dong.wav")
 
 def interrupt_callback():

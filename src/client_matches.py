@@ -45,4 +45,36 @@ clientMatches = [ {
 					"SpokenResponseLong" : "Bed lamp deactivated.",
 					"WrittenResponse" : "Bed lamp off.",
 					"WrittenResponseLong" : "Bed lamp deactivated."
+				},
+				{
+					"Expression" : '"turn" . ("my" | "the") . ("night" . "light" | "nightlight") . "on" | "switch" . "on" . ["the"] . ("night" . "light" | "nightlight") | "activate" . ["the"] . ("night" . "light" | "nightlight")',
+					"Result" : { "Intent" : "NIGHT_LIGHT_ON" },
+					"SpokenResponse" : "Night light on.",
+					"SpokenResponseLong" : "Night light activated.",
+					"WrittenResponse" : "Night light on.",
+					"WrittenResponseLong" : "Night light activated."
+				},
+				{
+					"Expression" : '"turn" . ("my" | "the") . ("night" . "light" | "nightlight") . "off" | "switch" . "off" . ["the"] . ("night" . "light" | "nightlight") | "deactivate" . ["the"] . ("night" . "light" | "nightlight")',
+					"Result" : { "Intent" : "NIGHT_LIGHT_OFF" },
+					"SpokenResponse" : "Night light off.",
+					"SpokenResponseLong" : "Night light deactivated.",
+					"WrittenResponse" : "Night light off.",
+					"WrittenResponseLong" : "Night light deactivated."
+				},
+				{
+					"Expression" : '"who" . "is" . "your" . "master" | "who" . "do" . "you" . "obey"',
+					"Result" : { "Intent" : "MASTER_WHO" },
+					"SpokenResponse" : "Baron",
+					"SpokenResponseLong" : "My master is Baron who currently lives in this room.",
+					"WrittenResponse" : "Baron",
+					"WrittenResponseLong" : "My master is Baron who currently lives in this room."
+				},
+				{
+					"Expression" : '"do" . "the" . ("milkshake" | "milk" . "shake") | ["can" . "you"] . ["do" . "a"] . "dance"',
+					"Result" : { "Intent" : "MILKSHAKE" },
+					"SpokenResponse" : "No.",
+					"SpokenResponseLong" : "Do I look like I can dance? No.",
+					"WrittenResponse" : "No.",
+					"WrittenResponseLong" : "Do I look like I can dance? No."
 				} ]

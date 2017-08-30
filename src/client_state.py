@@ -21,7 +21,7 @@ clientState = {
                     [
                       "TurnOn",
                       "TurnOff"
-                    ],
+                    ]
                   }
                 ]
-            }
+              }

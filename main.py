@@ -26,7 +26,7 @@ voice_speed="-s200" # default: 175
 voice_type="m7"     # current: m7
 voice_gap=""        # default: -g10
 
-BUFFER_SIZE = 512
+BUFFER_SIZE = 2048
 
 name = "pascal"
 
@@ -34,6 +34,7 @@ interrupted = False
 detected = False
 error = False
 arc_pos = 0.0
+first_time = True
 
 # RF signals
 a_on =  '1110111110101010110011001'
@@ -46,6 +47,10 @@ d_on =  '1110111110100010111111001'
 d_off = '1110111110100010111100111'
 e_on =  '1110111110001010111111001'
 e_off = '1110111110001010111100111'
+
+# Devices
+DEVICE_BED_LAMP = 1
+DEVICE_NIGHT_LIGHT = 2
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
@@ -80,10 +85,13 @@ def on_client_match(intent):
     elif intent == "FULLSCREEN_STOP":
         if using_gui:
             screen = pygame.display.set_mode((640,480))
-    elif intent == "NIGHT_LIGHT_ON":    # Yes, I have a night light. Don't judge me.
-        rf.transmit_code(a_on)
-    elif intent == "NIGHT_LIGHT_OFF":
-        rf.transmit_code(a_off)
+
+def on_home_automation(device_id, operation):
+    if device_id == DEVICE_NIGHT_LIGHT: # Yes, I have a night light. Don't judge me.
+        if operation == "TurnOn":
+            rf.transmit_code(a_on)
+        elif operation == "TurnOff":
+            rf.transmit_code(a_off)
 
 def play_random_error():
     error_reponses =    [
@@ -111,7 +119,6 @@ def play_help_msg():
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
         global screen, arc_pos
-        print("Partial transcript: " + transcript)
         if using_gui:
             font_comic = pygame.font.SysFont("comicsansms", 24)
             screen.fill((0,0,0))
@@ -120,29 +127,41 @@ class MyListener(houndify.HoundListener):
             pygame.draw.arc(screen, (89,136,255), (220,140,200,200), arc_pos+0.628, arc_pos+5.645, 10)
             pygame.display.update()
             arc_pos += 0.1
+        else:
+            print("Partial transcript: " + transcript)
 
     def onFinalResponse(self, response):
         global screen
         if using_gui:
             screen.fill((0,0,0))
-        print("Final response:")
-        pp = pprint.PrettyPrinter()
-        pp.pprint(response)
+        else:
+            print("Final response:")
+            pp = pprint.PrettyPrinter()
+            pp.pprint(response)
         if len(response["AllResults"]) > 0:
-            responseSpeech = ""
-            if "SpokenResponseLong" in response["AllResults"][0]:
-                responseSpeech = response["AllResults"][0]["SpokenResponseLong"]
-            else:
-                responseSpeech = response["AllResults"][0]["WrittenResponseLong"]
-            if responseSpeech != "Didn't get that!":
-                play_voice(responseSpeech)
+                first_result = response["AllResults"][0]
+                if ("CommandKind" in first_result) and (first_result["CommandKind"] == "HomeAutomationControlCommand"):
+                    print("1")
+                    if "DeviceSpecifier" in first_result and len(first_result["DeviceSpecifier"]["Devices"]) > 0:
+                        print("2")
+                        on_home_automation(int(first_result["DeviceSpecifier"]["Devices"][0]["ID"]), first_result["Operation"])
+                        responseSpeech = first_result["ClientActionSucceededResult"]["SpokenResponseLong"]
+                        play_voice(responseSpeech)
+                else:
+                    responseSpeech = ""
+                    if "SpokenResponseLong" in first_result:
+                        responseSpeech = first_result["SpokenResponseLong"]
+                    else:
+                        responseSpeech = first_result["WrittenResponseLong"]
+                    if responseSpeech != "Didn't get that!":
+                        play_voice(responseSpeech)
 
-                # Execute client match
-                if "Result" in response["AllResults"][0]:
-                    if "Intent" in response["AllResults"][0]["Result"]:
-                        on_client_match(response["AllResults"][0]["Result"]["Intent"])
-            else:
-                play_random_error()
+                        # Execute client match
+                        if "Result" in first_result:
+                            if "Intent" in first_result["Result"]:
+                                on_client_match(first_result["Result"]["Intent"])
+                    else:
+                        play_random_error()
         else:
             play_random_error()
 
@@ -172,11 +191,21 @@ def test_voice():
     play_voice(voice_text)
 
 def run_voice_request(client):
-    global interrupted, error, arc_pos, partial_transcript
+    global interrupted, error, arc_pos, partial_transcript, first_time
     i = 0
     finished = False
     arc_pos = 0.0
     try:
+        # Send device list to Houndify
+        if first_time:
+            textClient = houndify.TextHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
+            textClient.setHoundRequestInfo('ClientState', client_state.clientState)
+            response = textClient.query("index_user_devices_from_request_info")
+            pp = pprint.PrettyPrinter()
+            pp.pprint(response)
+            print("Devices sent successfully")
+            first_time = False
+
         client.start(MyListener())
         os.system("amixer sset PCM mute")
         GPIO.output(18,GPIO.HIGH)
@@ -242,7 +271,6 @@ if __name__ == '__main__':
     client = houndify.StreamingHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
     client.setLocation(51.654022,-0.038691)
     client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
-    # client.setHoundRequestInfo('ClientState', client_state.clientState)
     client.setHoundRequestInfo('UnitPreference', 'METRIC')
     client.setHoundRequestInfo('FirstPersonSelf', name)
     client.setSampleRate(16000)
@@ -250,7 +278,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.41,0.41, 0.1, 0.35]
+    sensitivity = [0.41, 0.41, 0.1, 0.35]
 
     if not len(models) == len(sensitivity):
         raise AssertionError()
@@ -275,4 +303,5 @@ if __name__ == '__main__':
 
     if error:
         play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
-        GPIO.cleanup()
+
+    GPIO.cleanup()

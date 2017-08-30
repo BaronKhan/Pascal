@@ -31,38 +31,6 @@ clientMatches = [ {
 					"WrittenResponseLong" : "Exiting fullscreen mode."
 				},
 				{
-					"Expression" : '"turn" . ("my" | "the") . ["bed"] . "lamp" . "on" | "switch" . "on" . ["the"] . ["bed"] . "lamp" | "activate" . ["the"] . ["bed"] . "lamp"',
-					"Result" : { "Intent" : "LAMP_ON" },
-					"SpokenResponse" : "Bed lamp on.",
-					"SpokenResponseLong" : "Bed lamp activated.",
-					"WrittenResponse" : "Bed lamp on.",
-					"WrittenResponseLong" : "Bed lamp activated."
-				},
-				{
-					"Expression" : '"turn" . ("my" | "the") . ["bed"] . "lamp" . "off" | "switch" . "off" . ["the"] . ["bed"] . "lamp" | "deactivate" . ["the"] . ["bed"] . "lamp"',
-					"Result" : { "Intent" : "LAMP_OFF" },
-					"SpokenResponse" : "Bed lamp off.",
-					"SpokenResponseLong" : "Bed lamp deactivated.",
-					"WrittenResponse" : "Bed lamp off.",
-					"WrittenResponseLong" : "Bed lamp deactivated."
-				},
-				{
-					"Expression" : '"turn" . ("my" | "the") . ("night" . "light" | "nightlight") . "on" | "switch" . "on" . ["the"] . ("night" . "light" | "nightlight") | "activate" . ["the"] . ("night" . "light" | "nightlight")',
-					"Result" : { "Intent" : "NIGHT_LIGHT_ON" },
-					"SpokenResponse" : "Night light on.",
-					"SpokenResponseLong" : "Night light activated.",
-					"WrittenResponse" : "Night light on.",
-					"WrittenResponseLong" : "Night light activated."
-				},
-				{
-					"Expression" : '"turn" . ("my" | "the") . ("night" . "light" | "nightlight") . "off" | "switch" . "off" . ["the"] . ("night" . "light" | "nightlight") | "deactivate" . ["the"] . ("night" . "light" | "nightlight")',
-					"Result" : { "Intent" : "NIGHT_LIGHT_OFF" },
-					"SpokenResponse" : "Night light off.",
-					"SpokenResponseLong" : "Night light deactivated.",
-					"WrittenResponse" : "Night light off.",
-					"WrittenResponseLong" : "Night light deactivated."
-				},
-				{
 					"Expression" : '"who" . "is" . "your" . "master" | "who" . "do" . "you" . "obey"',
 					"Result" : { "Intent" : "MASTER_WHO" },
 					"SpokenResponse" : "Baron",

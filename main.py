@@ -16,6 +16,7 @@ import time
 import pygame
 import pprint
 import argparse
+import pyaudio
 
 using_gui = False
 start_fullscreen = False
@@ -172,7 +173,6 @@ def test_voice():
 
 def run_voice_request(client):
     global interrupted, error, arc_pos, partial_transcript, first_time
-    i = 0
     finished = False
     arc_pos = 0.0
     try:
@@ -197,17 +197,17 @@ def run_voice_request(client):
             screen.blit(help_text, (320 - help_text.get_width()//2, 180 - help_text.get_height()//2))
             pygame.display.update()
 
-        while not finished and i<5:
-            os.system("arecord temp"+str(i)+".wav -D sysdefault:CARD=1 -r 16000 -f S16_LE -d 1")
-            audio = wave.open("temp"+str(i)+".wav")
-            samples = audio.readframes(BUFFER_SIZE)
-            while len(samples) != 0 and not finished:
-                finished = client.fill(samples)
-                samples = audio.readframes(BUFFER_SIZE)
-            audio.close()
-            i+=1
-        for j in range(i):
-            os.remove("temp"+str(j)+".wav")
+        audio = pyaudio.PyAudio()
+        stream = audio.open(format=pyaudio.paInt16, channels=1, rate=16000, input=True, frames_per_buffer=BUFFER_SIZE)
+        for i in range(0, int(16000 / BUFFER_SIZE * 5)):
+            data = stream.read(BUFFER_SIZE)
+            finished = client.fill(data)
+            if finished:
+                break
+        stream.stop_stream()
+        stream.close()
+        audio.terminate()
+
         os.system("amixer sset PCM unmute")
         client.finish()
         if error:

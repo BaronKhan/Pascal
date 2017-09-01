@@ -50,7 +50,7 @@ e_off = '1110111110001010111100111'
 
 # Devices
 DEVICE_BED_LAMP = 1
-DEVICE_NIGHT_LIGHT = 2
+DEVICE_NIGHT_LIGHT = 2 # Yes, I have a night light. Don't judge me.
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
@@ -87,7 +87,7 @@ def on_client_match(intent):
             screen = pygame.display.set_mode((640,480))
 
 def on_home_automation(device_id, operation):
-    if device_id == DEVICE_NIGHT_LIGHT: # Yes, I have a night light. Don't judge me.
+    if device_id == DEVICE_NIGHT_LIGHT:
         if operation == "TurnOn":
             rf.transmit_code(a_on)
         elif operation == "TurnOff":

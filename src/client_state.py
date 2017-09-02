@@ -3,7 +3,7 @@ clientState = {
                 [
                   {
                     "HomeAutomationSolution": "Client",
-                    "Name": "Bed Lamp",
+                    "Name": "Night Light",
                     "ID": "1",
                     "Type": "Light",
                     "Capabilities":
@@ -14,8 +14,30 @@ clientState = {
                   },
                   {
                     "HomeAutomationSolution": "Client",
-                    "Name": "Night Light",
+                    "Name": "Lamp",
                     "ID": "2",
+                    "Type": "Light",
+                    "Capabilities":
+                    [
+                      "TurnOn",
+                      "TurnOff"
+                    ]
+                  },
+                  {
+                    "HomeAutomationSolution": "Client",
+                    "Name": "Fan",
+                    "ID": "3",
+                    "Type": "Light",
+                    "Capabilities":
+                    [
+                      "TurnOn",
+                      "TurnOff"
+                    ]
+                  },
+                  {
+                    "HomeAutomationSolution": "Client",
+                    "Name": "Light",
+                    "ID": "4",
                     "Type": "Light",
                     "Capabilities":
                     [

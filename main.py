@@ -50,8 +50,9 @@ e_on =  '1110111110001010111111001'
 e_off = '1110111110001010111100111'
 
 # Devices
-DEVICE_BED_LAMP = 1
-DEVICE_NIGHT_LIGHT = 2 # Yes, I have a night light. Don't judge me.
+DEVICE_NIGHT_LIGHT = 1 # Yes, I have a night light. Don't judge me.
+DEVICE_BED_LAMP = 2
+DEVICE_FAN = 3
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
@@ -93,6 +94,19 @@ def on_home_automation(device_id, operation):
             rf.transmit_code(a_on)
         elif operation == "TurnOff":
             rf.transmit_code(a_off)
+    elif device_id == DEVICE_BED_LAMP:
+        if operation == "TurnOn":
+            rf.transmit_code(b_on)
+        elif operation == "TurnOff":
+            rf.transmit_code(b_off)
+    elif device_id == DEVICE_FAN:
+        if operation == "TurnOn":
+            rf.transmit_code(c_on)
+        elif operation == "TurnOff":
+            rf.transmit_code(c_off)
+    else:
+        return False
+    return True
 
 def play_voice(voice_text):
     # gTTS
@@ -137,9 +151,12 @@ class MyListener(houndify.HoundListener):
                 first_result = response["AllResults"][0]
                 if ("CommandKind" in first_result) and (first_result["CommandKind"] == "HomeAutomationControlCommand"):
                     if "DeviceSpecifier" in first_result and len(first_result["DeviceSpecifier"]["Devices"]) > 0:
-                        on_home_automation(int(first_result["DeviceSpecifier"]["Devices"][0]["ID"]), first_result["Operation"])
-                        responseSpeech = first_result["ClientActionSucceededResult"]["SpokenResponseLong"]
-                        play_voice(responseSpeech)
+                        success = on_home_automation(int(first_result["DeviceSpecifier"]["Devices"][0]["ID"]), first_result["Operation"])
+                        if success:
+                            responseSpeech = first_result["ClientActionSucceededResult"]["SpokenResponseLong"]
+                            play_voice(responseSpeech)
+                        else:
+                            play_voice("I'm sorry, I currently cannot access this device.")
                 else:
                     responseSpeech = ""
                     if "SpokenResponseLong" in first_result:

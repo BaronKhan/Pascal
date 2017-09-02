@@ -2,6 +2,7 @@ from src import houndify
 from src import client_defines
 from src import client_matches
 from src import client_state
+from src import snowboydecoder
 from src import pygame_gdt as gdt
 from src import transmit_rf as rf
 from gtts import gTTS
@@ -11,7 +12,6 @@ import sys
 import wave
 import random
 import signal
-from src import snowboydecoder
 import time
 import pygame
 import pprint
@@ -36,7 +36,6 @@ detected = False
 error = False
 arc_pos = 0.0
 first_time = True
-retry_count = 0
 
 # RF signals
 a_on =  '1110111110101010110011001'
@@ -196,7 +195,7 @@ def run_voice_request(client):
     try:
         # Send device list to Houndify
         if first_time:
-            textClient = houndify.TextHoundClient(client_defines.CLIENT_ID[retry_count], client_defines.CLIENT_KEY[retry_count], "ai_robot")
+            textClient = houndify.TextHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
             textClient.setHoundRequestInfo('ClientState', client_state.clientState)
             response = textClient.query("index_user_devices_from_request_info")
             pp = pprint.PrettyPrinter()
@@ -258,6 +257,8 @@ if __name__ == '__main__':
         else:
             screen = pygame.display.set_mode((640,480))
 
+    print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
+
     if using_gui:
             pygame.draw.arc(screen, (89,136,255), (220,140,200,200), 2.199, 7.216, 10)
             pygame.draw.lines(screen, (89,136,255), False, [(290,120), (290,200)], 10)
@@ -270,54 +271,41 @@ if __name__ == '__main__':
     GPIO.setwarnings(False)
     GPIO.setup(18,GPIO.OUT)
 
-    try_again = True
+    client = houndify.StreamingHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
+    client.setLocation(51.654022,-0.038691)
+    client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
+    client.setHoundRequestInfo('UnitPreference', 'METRIC')
+    client.setHoundRequestInfo('FirstPersonSelf', name)
+    client.setSampleRate(16000)
 
-    while try_again:
-        try_again = False
-        print("client id: "+client_defines.CLIENT_ID[retry_count]+"\nclient key: "+client_defines.CLIENT_KEY[retry_count])
+    signal.signal(signal.SIGINT, signal_handler)
 
-        client = houndify.StreamingHoundClient(client_defines.CLIENT_ID[retry_count], client_defines.CLIENT_KEY[retry_count], "ai_robot")
-        client.setLocation(51.654022,-0.038691)
-        client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
-        client.setHoundRequestInfo('UnitPreference', 'METRIC')
-        client.setHoundRequestInfo('FirstPersonSelf', name)
-        client.setSampleRate(16000)
+    models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
+    sensitivity = [0.41, 0.41, 0.1, 0.35]
 
-        signal.signal(signal.SIGINT, signal_handler)
+    if not len(models) == len(sensitivity):
+        raise AssertionError()
 
-        models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-        sensitivity = [0.41, 0.41, 0.1, 0.35]
+    while not interrupted:
+        detected = False
+        detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity)
+        callbacks = [lambda: detection_callback(),
+                     lambda: detection_callback(),
+                     lambda: detection_callback(),
+                     lambda: detection_callback()]
+        print('Listening... Press Ctrl+C to exit')
+        if using_gui:
+            screen.fill((0,0,0))
+            pygame.draw.circle(screen, (89,136,255), (320,240), 100, 10)
+            pygame.display.update()
+        detector.start(detected_callback=callbacks,
+                       interrupt_check=interrupt_callback,
+                       sleep_time=0.03)
+        detector.terminate()
+        if not interrupted:
+            run_voice_request(client)
 
-        if not len(models) == len(sensitivity):
-            raise AssertionError()
-
-        while not interrupted:
-            detected = False
-            detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity)
-            callbacks = [lambda: detection_callback(),
-                         lambda: detection_callback(),
-                         lambda: detection_callback(),
-                         lambda: detection_callback()]
-            print('Listening... Press Ctrl+C to exit')
-            if using_gui:
-                screen.fill((0,0,0))
-                pygame.draw.circle(screen, (89,136,255), (320,240), 100, 10)
-                pygame.display.update()
-            detector.start(detected_callback=callbacks,
-                           interrupt_check=interrupt_callback,
-                           sleep_time=0.03)
-            detector.terminate()
-            if not interrupted:
-                run_voice_request(client)
-
-        if error:
-            if retry_count < 2:
-                retry_count += 1
-                try_again = True
-                first_time = True
-                error = False
-                play_voice("Did you say something? Try saying it again.")
-            else:
-                play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
+    if error:
+        play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
 
     GPIO.cleanup()

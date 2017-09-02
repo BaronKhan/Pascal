@@ -1,7 +1,7 @@
 houndify_python3_sdk_0.6.0/
 snowboy/
 copy_to_pi.sh
-terminal_shortcuts.txt
-sound_settings.txt
+data/terminal_shortcuts.txt
+data/sound_settings.txt
 src/client_defines.py
 recordings/

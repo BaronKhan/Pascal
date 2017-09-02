@@ -36,6 +36,7 @@ detected = False
 error = False
 arc_pos = 0.0
 first_time = True
+retry_count = 0
 
 # RF signals
 a_on =  '1110111110101010110011001'
@@ -129,9 +130,9 @@ class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
         global screen, arc_pos
         if using_gui:
-            font_comic = pygame.font.SysFont("comicsansms", 24)
+            font_comic = pygame.font.SysFont("comicsansms", 28)
             screen.fill((0,0,0))
-            pt_text = font_comic.render(transcript, 1, (255,255,0))
+            pt_text = font_comic.render(transcript, 1, (255,255,255))
             screen.blit(pt_text, (320 - pt_text.get_width()//2, 30))
             pygame.draw.arc(screen, (89,136,255), (220,140,200,200), arc_pos+0.628, arc_pos+5.645, 10)
             pygame.display.update()
@@ -195,7 +196,7 @@ def run_voice_request(client):
     try:
         # Send device list to Houndify
         if first_time:
-            textClient = houndify.TextHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
+            textClient = houndify.TextHoundClient(client_defines.CLIENT_ID[retry_count], client_defines.CLIENT_KEY[retry_count], "ai_robot")
             textClient.setHoundRequestInfo('ClientState', client_state.clientState)
             response = textClient.query("index_user_devices_from_request_info")
             pp = pprint.PrettyPrinter()
@@ -257,7 +258,11 @@ if __name__ == '__main__':
         else:
             screen = pygame.display.set_mode((640,480))
 
-    print("client id: "+client_defines.CLIENT_ID+"\nclient key: "+client_defines.CLIENT_KEY)
+    if using_gui:
+            pygame.draw.arc(screen, (89,136,255), (220,140,200,200), 2.199, 7.216, 10)
+            pygame.draw.lines(screen, (89,136,255), False, [(290,120), (290,200)], 10)
+            pygame.draw.lines(screen, (89,136,255), False, [(350,120), (350,200)], 10)
+            pygame.display.update()
 
     play_voice("Hello. I am Pascal.")
 
@@ -265,40 +270,54 @@ if __name__ == '__main__':
     GPIO.setwarnings(False)
     GPIO.setup(18,GPIO.OUT)
 
-    client = houndify.StreamingHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
-    client.setLocation(51.654022,-0.038691)
-    client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
-    client.setHoundRequestInfo('UnitPreference', 'METRIC')
-    client.setHoundRequestInfo('FirstPersonSelf', name)
-    client.setSampleRate(16000)
+    try_again = True
 
-    signal.signal(signal.SIGINT, signal_handler)
+    while try_again:
+        try_again = False
+        print("client id: "+client_defines.CLIENT_ID[retry_count]+"\nclient key: "+client_defines.CLIENT_KEY[retry_count])
 
-    models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.41, 0.41, 0.1, 0.35]
+        client = houndify.StreamingHoundClient(client_defines.CLIENT_ID[retry_count], client_defines.CLIENT_KEY[retry_count], "ai_robot")
+        client.setLocation(51.654022,-0.038691)
+        client.setHoundRequestInfo('ClientMatches', client_matches.clientMatches)
+        client.setHoundRequestInfo('UnitPreference', 'METRIC')
+        client.setHoundRequestInfo('FirstPersonSelf', name)
+        client.setSampleRate(16000)
 
-    if not len(models) == len(sensitivity):
-        raise AssertionError()
+        signal.signal(signal.SIGINT, signal_handler)
 
-    while not interrupted:
-        detected = False
-        detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity)
-        callbacks = [lambda: detection_callback(),
-                     lambda: detection_callback(),
-                     lambda: detection_callback(),
-                     lambda: detection_callback()]
-        print('Listening... Press Ctrl+C to exit')
-        if using_gui:
-            pygame.draw.circle(screen, (89,136,255), (320,240), 100, 10)
-            pygame.display.update()
-        detector.start(detected_callback=callbacks,
-                       interrupt_check=interrupt_callback,
-                       sleep_time=0.03)
-        detector.terminate()
-        if not interrupted:
-            run_voice_request(client)
+        models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
+        sensitivity = [0.41, 0.41, 0.1, 0.35]
 
-    if error:
-        play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
+        if not len(models) == len(sensitivity):
+            raise AssertionError()
+
+        while not interrupted:
+            detected = False
+            detector = snowboydecoder.HotwordDetector(models, sensitivity=sensitivity)
+            callbacks = [lambda: detection_callback(),
+                         lambda: detection_callback(),
+                         lambda: detection_callback(),
+                         lambda: detection_callback()]
+            print('Listening... Press Ctrl+C to exit')
+            if using_gui:
+                screen.fill((0,0,0))
+                pygame.draw.circle(screen, (89,136,255), (320,240), 100, 10)
+                pygame.display.update()
+            detector.start(detected_callback=callbacks,
+                           interrupt_check=interrupt_callback,
+                           sleep_time=0.03)
+            detector.terminate()
+            if not interrupted:
+                run_voice_request(client)
+
+        if error:
+            if retry_count < 2:
+                retry_count += 1
+                try_again = True
+                first_time = True
+                error = False
+                play_voice("Did you say something? Try saying it again.")
+            else:
+                play_voice("I'm very sorry, but I've had enough for today. Goodbye.")
 
     GPIO.cleanup()

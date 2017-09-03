@@ -5,10 +5,17 @@ Pascal
 it is capable of controlling devices in the room, as well as providing small talk and various bits of
 information that the user asks. It is named after the machine from the video game, *NieR: Automata*.
 
-Say "Pascal", followed by a query, such as a greeting, a question, or a command. Uses the snowboy API for
-wakeup word detection, Houndify for the voice request, and gTTs for the voice audio output.
+Say hello or Pascal's name, followed by a query, such as a greeting, a question, or a command.
 
-Uses a 433MHz RF transmitter to toggle the connected devices, such as lamps, light bulbs, fans, etc.
+Examples of voice requests include:
+- "Hello, how are you?"
+- "Pascal, what's the weather like tonight?"
+- "Hi, who is you master?"
+- "Hey Pascal, turn on my fan."
+- "Pascal, switch my lamp off."
+
+Room automation is achieved by using a 433MHz RF transmitter to toggle the connected devices, such as
+lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the bundled RF remote control.
 
 ## Hardware
 
@@ -21,6 +28,6 @@ Uses a 433MHz RF transmitter to toggle the connected devices, such as lamps, lig
 
 ## Software
 
-- snowboy
-- Houndify
-- gTTs
+- [snowboy](https://github.com/Kitt-AI/snowboy) - detects the "Hey Pascal" hotword phrases
+- [Houndify](https://www.houndify.com) - cloud service for fro request handling
+- [gTTs](https://github.com/pndurette/gTTS) - Google Text-to-Speech API

@@ -175,7 +175,8 @@ class MyListener(houndify.HoundListener):
                         responseSpeech = first_result["SpokenResponseLong"]
                     else:
                         responseSpeech = first_result["WrittenResponseLong"]
-                    if responseSpeech != "Didn't get that!":
+                    if ((responseSpeech != "Didn't get that!") and
+                    ("Home Automation commands" not in responseSpeech)):
                         play_voice(responseSpeech)
 
                         # Execute client match

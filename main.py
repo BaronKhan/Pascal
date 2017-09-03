@@ -49,10 +49,16 @@ d_off = '1110111110100010111100111'
 e_on =  '1110111110001010111111001'
 e_off = '1110111110001010111100111'
 
+# Custom RF signals
+f_on =  '1111111111110101010101111'
+f_off = '1111111111111010101010000'
+
 # Devices
 DEVICE_NIGHT_LIGHT = 1 # Yes, I have a night light. Don't judge me.
 DEVICE_BED_LAMP = 2
 DEVICE_FAN = 3
+DEVICE_LIGHT = 4
+DEVICE_LIGHTS = 5
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--gui", help="display the GUI",
@@ -104,6 +110,12 @@ def on_home_automation(device_id, operation):
             rf.transmit_code(c_on)
         elif operation == "TurnOff":
             rf.transmit_code(c_off)
+    elif ((device_id == DEVICE_LIGHT) or
+        (device_id == DEVICE_LIGHTS)):
+        if operation == "TurnOn":
+            rf.transmit_code(f_on)
+        elif operation == "TurnOff":
+            rf.transmit_code(f_off)
     else:
         return False
     return True

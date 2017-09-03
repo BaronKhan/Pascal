@@ -44,6 +44,17 @@ clientState = {
                       "TurnOn",
                       "TurnOff"
                     ]
+                  },
+                  {
+                    "HomeAutomationSolution": "Client",
+                    "Name": "Lights",
+                    "ID": "5",
+                    "Type": "Light",
+                    "Capabilities":
+                    [
+                      "TurnOn",
+                      "TurnOff"
+                    ]
                   }
                 ]
               }

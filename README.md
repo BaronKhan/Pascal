@@ -1,4 +1,4 @@
-Pascal
+Pascal - Room Automation Assistant
 =============
 
 *Pascal* is a personal assistant and room automation system. Similar to Google Home and Amazon Echo,
@@ -13,6 +13,7 @@ Examples of voice requests include:
 - "Hi, who is you master?"
 - "Hey Pascal, turn on my fan."
 - "Pascal, switch my lamp off."
+- "Hey Pascal, turn my lights on."
 
 Room automation is achieved by using a 433MHz RF transmitter to toggle the connected devices, such as
 lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the bundled RF remote control.
@@ -26,8 +27,13 @@ lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the 
 - 433MHz RF Transmitter
 - ZAP 5LX Remote Control Sockets (5x)
 
+__Light Switch Mechanism__
+- Arduino Uno
+- Tower Pro Servo Motor (2x)
+- 433MHz RF Receiver
+
 ## Software
 
-- [snowboy](https://github.com/Kitt-AI/snowboy) - detects the "Hey Pascal" hotword phrases
-- [Houndify](https://www.houndify.com) - cloud service for fro request handling
+- [snowboy](https://github.com/Kitt-AI/snowboy) - detects the "Hey Pascal" hot word phrases
+- [Houndify](https://www.houndify.com) - cloud service for voice request handling
 - [gTTs](https://github.com/pndurette/gTTS) - Google Text-to-Speech API

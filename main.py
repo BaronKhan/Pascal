@@ -17,6 +17,7 @@ import pygame
 import pprint
 import argparse
 import pyaudio
+import textwrap
 
 using_gui = False
 start_fullscreen = False
@@ -121,6 +122,16 @@ def on_home_automation(device_id, operation):
     return True
 
 def play_voice(voice_text):
+    if using_gui:
+        font_comic = pygame.font.SysFont("comicsansms", 36)
+        # Split text into lines of 45 characters
+        voice_text_list = textwrap.wrap(voice_text, 55, break_long_words=False)
+        i=0
+        for voice_text_chunk in voice_text_list:
+            voice_str = font_comic.render(voice_text_chunk, 1, (255,255,255))
+            screen.blit(voice_str, (320 - voice_str.get_width()//2, 370+(voice_str.get_height()*i)))
+            i+=1
+        pygame.display.update()
     # gTTS
     tts = gTTS(text=voice_text, lang='en-uk')
     tts.save("response.mp3")
@@ -153,9 +164,7 @@ class MyListener(houndify.HoundListener):
 
     def onFinalResponse(self, response):
         global screen
-        if using_gui:
-            screen.fill((0,0,0))
-        else:
+        if not using_gui:
             print("Final response:")
             pp = pprint.PrettyPrinter()
             pp.pprint(response)

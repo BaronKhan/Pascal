@@ -18,6 +18,10 @@ Examples of voice requests include:
 Room automation is achieved by using a 433MHz RF transmitter to toggle the connected devices, such as
 lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the bundled RF remote control.
 
+## Watch Pascal in action!
+
+- [Demo #1](https://youtu.be/9yTI9BmjDJw)
+
 ## Hardware
 
 - Raspberry Pi 3

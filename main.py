@@ -304,7 +304,7 @@ if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
 
     models = ["pascal_model.umdl", "pascal_female_model.umdl", "hello_model.umdl", "hi_model.umdl"]
-    sensitivity = [0.45, 0.41, 0.1, 0.35]
+    sensitivity = [0.43, 0.41, 0.1, 0.35]
 
     if not len(models) == len(sensitivity):
         raise AssertionError()

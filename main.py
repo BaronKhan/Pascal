@@ -82,6 +82,7 @@ else:
 
 if using_gui:
     pygame.init()
+    pygame.mouse.set_visible(False)
 
 def on_client_match(intent):
     global interrupted, screen

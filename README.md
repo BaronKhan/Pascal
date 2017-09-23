@@ -41,3 +41,9 @@ __Light Switch Mechanism__
 - [snowboy](https://github.com/Kitt-AI/snowboy) - detects the "Hey Pascal" hot word phrases
 - [Houndify](https://www.houndify.com) - cloud service for voice request handling
 - [gTTs](https://github.com/pndurette/gTTS) - Google Text-to-Speech API
+
+## Checklist
+
+- [] Create a microphone app
+- [] Perform commands via text string (for use by app)
+- [] Change hardware of switch mechanism for energy efficiency

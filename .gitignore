@@ -5,3 +5,13 @@ data/terminal_shortcuts.txt
 data/sound_settings.txt
 src/client_defines.py
 recordings/
+android/.gitignore
+android/*.iml
+android/.gradle
+android/local.properties
+android/.idea/workspace.xml
+android/.idea/libraries
+android/.DS_Store
+android/build
+android/captures
+android/.externalNativeBuild

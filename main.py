@@ -66,6 +66,7 @@ parser.add_argument("--gui", help="display the GUI",
                     action="store_true")
 parser.add_argument("--full", help="start in fullscreen mode",
                     action="store_true")
+parser.add_argument('-t', '--text', type=str, help='execute a text string command')
 args = parser.parse_args()
 
 if args.gui:
@@ -149,6 +150,41 @@ def play_random_error():
                         ]
     play_voice(random.choice(error_reponses))
 
+def do_final_response(response):
+    global screen
+    if not using_gui:
+        print("Final response:")
+        pp = pprint.PrettyPrinter()
+        pp.pprint(response)
+    if len(response["AllResults"]) > 0:
+            first_result = response["AllResults"][0]
+            if ("CommandKind" in first_result) and (first_result["CommandKind"] == "HomeAutomationControlCommand"):
+                if "DeviceSpecifier" in first_result and len(first_result["DeviceSpecifier"]["Devices"]) > 0:
+                    success = on_home_automation(int(first_result["DeviceSpecifier"]["Devices"][0]["ID"]), first_result["Operation"])
+                    if success:
+                        responseSpeech = first_result["ClientActionSucceededResult"]["SpokenResponseLong"]
+                        play_voice(responseSpeech)
+                    else:
+                        play_voice("I'm sorry, I currently cannot access this device.")
+            else:
+                responseSpeech = ""
+                if "SpokenResponseLong" in first_result:
+                    responseSpeech = first_result["SpokenResponseLong"]
+                else:
+                    responseSpeech = first_result["WrittenResponseLong"]
+                if ((responseSpeech != "Didn't get that!") and
+                ("Home Automation commands" not in responseSpeech)):
+                    play_voice(responseSpeech)
+
+                    # Execute client match
+                    if "Result" in first_result:
+                        if "Intent" in first_result["Result"]:
+                            on_client_match(first_result["Result"]["Intent"])
+                else:
+                    play_random_error()
+    else:
+        play_random_error()
+
 class MyListener(houndify.HoundListener):
     def onPartialTranscript(self, transcript):
         global screen, arc_pos
@@ -164,39 +200,7 @@ class MyListener(houndify.HoundListener):
             print("Partial transcript: " + transcript)
 
     def onFinalResponse(self, response):
-        global screen
-        if not using_gui:
-            print("Final response:")
-            pp = pprint.PrettyPrinter()
-            pp.pprint(response)
-        if len(response["AllResults"]) > 0:
-                first_result = response["AllResults"][0]
-                if ("CommandKind" in first_result) and (first_result["CommandKind"] == "HomeAutomationControlCommand"):
-                    if "DeviceSpecifier" in first_result and len(first_result["DeviceSpecifier"]["Devices"]) > 0:
-                        success = on_home_automation(int(first_result["DeviceSpecifier"]["Devices"][0]["ID"]), first_result["Operation"])
-                        if success:
-                            responseSpeech = first_result["ClientActionSucceededResult"]["SpokenResponseLong"]
-                            play_voice(responseSpeech)
-                        else:
-                            play_voice("I'm sorry, I currently cannot access this device.")
-                else:
-                    responseSpeech = ""
-                    if "SpokenResponseLong" in first_result:
-                        responseSpeech = first_result["SpokenResponseLong"]
-                    else:
-                        responseSpeech = first_result["WrittenResponseLong"]
-                    if ((responseSpeech != "Didn't get that!") and
-                    ("Home Automation commands" not in responseSpeech)):
-                        play_voice(responseSpeech)
-
-                        # Execute client match
-                        if "Result" in first_result:
-                            if "Intent" in first_result["Result"]:
-                                on_client_match(first_result["Result"]["Intent"])
-                    else:
-                        play_random_error()
-        else:
-            play_random_error()
+        do_final_response(response)
 
     def onError(self, err):
         global error
@@ -274,6 +278,17 @@ def interrupt_callback():
     return interrupted or detected
 
 if __name__ == '__main__':
+    if args.text:
+        textClient = houndify.TextHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
+        textClient.setHoundRequestInfo('ClientState', client_state.clientState)
+        response = textClient.query("index_user_devices_from_request_info")
+        pp = pprint.PrettyPrinter()
+        pp.pprint(response)
+        print("Devices sent successfully")
+        response = textClient.query(args.text)
+        do_final_response(response)
+        exit(0)
+
     if using_gui:
         if start_fullscreen:
             screen = pygame.display.set_mode((640,480),pygame.FULLSCREEN)

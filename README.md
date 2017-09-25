@@ -22,6 +22,7 @@ lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the 
 
 - [Demo #1](https://youtu.be/9yTI9BmjDJw)
 - [Demo #2](https://youtu.be/AAwFsfFT8-s)
+- [Download the Android App](https://play.google.com/store/apps/details?id=com.khan.baron.pascal)
 
 ## Hardware
 

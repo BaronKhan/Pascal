@@ -44,6 +44,6 @@ __Light Switch Mechanism__
 
 ## Checklist
 
-- [] Create a microphone app
-- [] Perform commands via text string (for use by app)
+- [x] Create a microphone app
+- [x] Perform commands via text string (for use by app)
 - [] Change hardware of switch mechanism for energy efficiency

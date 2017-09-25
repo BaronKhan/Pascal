@@ -21,6 +21,7 @@ lamps, light bulbs, fans, etc, by simulating the RF signal pulses sent from the 
 ## Watch Pascal in action!
 
 - [Demo #1](https://youtu.be/9yTI9BmjDJw)
+- [Demo #2](https://youtu.be/AAwFsfFT8-s)
 
 ## Hardware
 

@@ -15,3 +15,5 @@ android/.DS_Store
 android/build
 android/captures
 android/.externalNativeBuild
+android/app/libs/
+android/app/app-release.apk

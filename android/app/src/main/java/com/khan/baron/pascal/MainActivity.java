@@ -1,5 +1,6 @@
 package com.khan.baron.pascal;
 
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -10,13 +11,23 @@ import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Properties;
+
 import android.speech.RecognizerIntent;
 import android.widget.Toast;
 import android.content.Intent;
 import android.widget.TextView;
 import android.content.ActivityNotFoundException;
+
+import com.jcraft.jsch.ChannelExec;
+import com.jcraft.jsch.JSch;
+import com.jcraft.jsch.Session;
 
 public class MainActivity extends AppCompatActivity {
     private TextView txtSpeechInput;
@@ -57,6 +68,49 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private void executeCommand(String command)  {
+        final String my_command = command;
+        new AsyncTask<Integer, Void, Void>(){
+            @Override
+            protected Void doInBackground(Integer... params) {
+                Session session = null;
+                ChannelExec channel = null;
+                try {
+                    JSch jsch = new JSch();
+                    JSch.setConfig("StrictHostKeyChecking", "no");
+
+                    session = jsch.getSession("pi", "192.168.1.232", 22);
+                    session.setPassword("mypiowhy");
+                    session.connect();
+
+                    channel = (ChannelExec)session.openChannel("exec");
+                    InputStream in = channel.getInputStream();
+                    channel.setErrStream(System.err);
+                    channel.setCommand("python3 Pascal/main.py --text '"+my_command+"'");
+                    channel.connect();
+
+                    StringBuilder message = new StringBuilder();
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    String line = null;
+                    while ((line = reader.readLine()) != null)
+                    {
+                        message.append(line).append("\n");
+                    }
+                    channel.disconnect();
+                    while (!channel.isClosed()) {
+
+                    }
+                    System.out.println("Exit status: "+channel.getExitStatus());
+                    System.out.println("Message: "+message.toString());
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+        }.execute(1);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -68,6 +122,7 @@ public class MainActivity extends AppCompatActivity {
                     ArrayList<String> result = data
                             .getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS);
                     txtSpeechInput.setText(result.get(0));
+                    executeCommand(result.get(0));
                 }
                 break;
             }

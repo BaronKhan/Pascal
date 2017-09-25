@@ -279,6 +279,9 @@ def interrupt_callback():
 
 if __name__ == '__main__':
     if args.text:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setwarnings(False)
+        GPIO.setup(18,GPIO.OUT)
         textClient = houndify.TextHoundClient(client_defines.CLIENT_ID, client_defines.CLIENT_KEY, "ai_robot")
         textClient.setHoundRequestInfo('ClientState', client_state.clientState)
         response = textClient.query("index_user_devices_from_request_info")
@@ -287,6 +290,7 @@ if __name__ == '__main__':
         print("Devices sent successfully")
         response = textClient.query(args.text)
         do_final_response(response)
+        GPIO.cleanup()
         exit(0)
 
     if using_gui:

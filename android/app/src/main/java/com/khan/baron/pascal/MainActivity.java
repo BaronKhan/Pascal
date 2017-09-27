@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Handler;
 import android.speech.RecognizerIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -29,8 +30,14 @@ import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private TextView txtSpeechInput;
+    private TextView txtSpeechOutput;
+    private TextView txtSpeechInstruction;
     private final int REQ_CODE_SPEECH_INPUT = 100;
+    private String outputText = "";
 
+    private Runnable runnable;
+
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +47,8 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         txtSpeechInput = (TextView) findViewById(R.id.txtSpeechInput);
+        txtSpeechOutput = (TextView) findViewById(R.id.txtSpeechOutput);
+        txtSpeechInstruction = (TextView) findViewById(R.id.txtSpeechInstruction);
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
@@ -48,8 +57,19 @@ public class MainActivity extends AppCompatActivity {
                 Snackbar.make(view, "Voice request in progress...", Snackbar.LENGTH_LONG)
                         .setAction("Action", null).show();
                 promptSpeechInput();
+                txtSpeechInstruction.setText("");
             }
         });
+
+        runnable = new Runnable() {
+            @Override
+            public void run() {
+                onSpeechOutputUpdate();
+                handler.postDelayed(this, 100);
+            }
+        };
+        handler = new Handler();
+        handler.postDelayed(runnable, 100);
     }
 
     private void promptSpeechInput() {
@@ -68,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void executeCommand(String command)  {
         final String my_command = command;
+        outputText = "Waiting for response...";
         new AsyncTask<Integer, Void, Void>(){
             @Override
             protected Void doInBackground(Integer... params) {
@@ -100,19 +121,24 @@ public class MainActivity extends AppCompatActivity {
                     }
                     System.out.println("Exit status: "+channel.getExitStatus());
                     System.out.println("Message: "+message.toString());
-                    String pattern = "'WrittenResponseLong': \"([\\w\\W\\s\\S\\n]*)[\"']";
+                    String pattern = "\\|(.*)\\|";
 
                     Pattern r = Pattern.compile(pattern);
 
                     Matcher m = r.matcher(message.toString());
                     if (m.find( )) {
-                        System.out.println(m.group(0));
+                        outputText = m.group(0).replaceAll("\\|", "");
+
                     }else {
-                        System.out.println("ERROR");
+                        outputText = "Error: no response from Pascal";
                     }
+
+                    System.out.println(outputText);
 
                 } catch (Exception e) {
                     e.printStackTrace();
+                    outputText = "Error: could not connect to Pascal";
+                    System.out.println(outputText);
                 }
                 return null;
             }
@@ -136,6 +162,10 @@ public class MainActivity extends AppCompatActivity {
             }
 
         }
+    }
+
+    protected void onSpeechOutputUpdate() {
+        txtSpeechOutput.setText(outputText);
     }
 
     @Override

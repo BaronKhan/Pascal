@@ -124,6 +124,7 @@ def on_home_automation(device_id, operation):
     return True
 
 def play_voice(voice_text):
+    print("|"+str(voice_text)+"|")
     if using_gui:
         font_comic = pygame.font.SysFont("comicsansms", 36)
         # Split text into lines of 45 characters

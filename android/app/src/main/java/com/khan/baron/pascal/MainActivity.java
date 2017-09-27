@@ -1,33 +1,31 @@
 package com.khan.baron.pascal;
 
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.speech.RecognizerIntent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
-import android.view.Gravity;
-import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
-
-import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.ArrayList;
-import java.util.Locale;
-import java.util.Properties;
-
-import android.speech.RecognizerIntent;
-import android.widget.Toast;
-import android.content.Intent;
+import android.view.View;
 import android.widget.TextView;
-import android.content.ActivityNotFoundException;
+import android.widget.Toast;
 
 import com.jcraft.jsch.ChannelExec;
 import com.jcraft.jsch.JSch;
 import com.jcraft.jsch.Session;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MainActivity extends AppCompatActivity {
     private TextView txtSpeechInput;
@@ -102,6 +100,16 @@ public class MainActivity extends AppCompatActivity {
                     }
                     System.out.println("Exit status: "+channel.getExitStatus());
                     System.out.println("Message: "+message.toString());
+                    String pattern = "'WrittenResponseLong': \"([\\w\\W\\s\\S\\n]*)[\"']";
+
+                    Pattern r = Pattern.compile(pattern);
+
+                    Matcher m = r.matcher(message.toString());
+                    if (m.find( )) {
+                        System.out.println(m.group(0));
+                    }else {
+                        System.out.println("ERROR");
+                    }
 
                 } catch (Exception e) {
                     e.printStackTrace();

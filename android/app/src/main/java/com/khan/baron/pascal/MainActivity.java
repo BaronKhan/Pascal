@@ -105,7 +105,7 @@ public class MainActivity extends AppCompatActivity {
                     channel = (ChannelExec)session.openChannel("exec");
                     InputStream in = channel.getInputStream();
                     channel.setErrStream(System.err);
-                    channel.setCommand("python3 Pascal/main.py --text '"+my_command+"'");
+                    channel.setCommand("python3 Pascal/main.py --text \""+my_command+"\"");
                     channel.connect();
 
                     StringBuilder message = new StringBuilder();
